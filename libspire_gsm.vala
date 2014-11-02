@@ -898,6 +898,21 @@ Motorola_L6i
 			Features.CGMM = this.CGMM();
 			Features.CGMI = this.CGMI();
 			Features.CGMR = this.CGMR();
+			var s = new StringBuilder();
+			s.append_printf("CMGF: %s\n", Features.CMGF.to_string());
+			s.append_printf("CSCS:\n");
+			
+			foreach(var c in Features.CSCS){
+				s.append_printf("- %s\n", c.to_string());
+			}
+			
+			//s.append_printf("CMGL: %s\n", Features.CMGL.to_string());
+			s.append_printf("CIMI: %s\n", Features.CIMI.to_string());
+			s.append_printf("CGSN: %s\n", Features.CGSN.to_string());
+			s.append_printf("CGMM: %s\n", Features.CGMM.to_string());
+			s.append_printf("CGMI: %s\n", Features.CGMI.to_string());
+			s.append_printf("CGMR: %s\n", Features.CGMR.to_string());
+			print(s.str);
 		}
 		// TODO Tomar en cuenta que cuando se envia un sms flash un mensaje se sobrepone a otro lo que hara es mostrarse unicamente el ultimo mensaje.
 		public ArrayList<int> SMS_SEND_ON_SLICES(string phone, string Message = "", bool statusreport = false, bool enableMessageClass = false, edwinspire.PDU.DCS_MESSAGE_CLASS msgclass =  edwinspire.PDU.DCS_MESSAGE_CLASS.TE_SPECIFIC, int maxPortions = 2, bool send_empty_message = false) {
@@ -935,10 +950,12 @@ Motorola_L6i
 			}
 			return Retorno;
 		}
+		
+		
 		public int SMS_SEND(string phone, string Message = "",  bool statusreport = false, bool enableMessageClass = false, edwinspire.PDU.DCS_MESSAGE_CLASS msgclass =  edwinspire.PDU.DCS_MESSAGE_CLASS.TE_SPECIFIC) {
 			int Retorno = 0;
 			int intentos = 0;
-			GLib.print("Send SMS Phone: %s - Text: %s\n", phone, Message);
+			
 			if(phone.length>1) {
 				while(this.Features.CMGF == Mode.UNKNOWN && intentos<2) {
 					this.Features.CMGF == this.CMGF_Support();
@@ -968,7 +985,7 @@ Motorola_L6i
 		}
 		public int SMS_SEND_PDU(string phone, string Message = "", bool statusreport = false, bool enable_msg_class = false, edwinspire.PDU.DCS_MESSAGE_CLASS msgclass =  edwinspire.PDU.DCS_MESSAGE_CLASS.TE_SPECIFIC) {
 			// El tamaño maximo de un sms es de 160 caracteres
-			string message = Message;
+			string message = text_as_unicode(Message);
 			int Retorno = 0;
 			if(phone.length>1) {
 				if(Message.length>160) {
@@ -1006,6 +1023,7 @@ Motorola_L6i
 			return CMG_WS_PDU(false, LengthPDU, PDU);
 		}
 		private int CMG_WS_PDU(bool W, int LengthPDU, string PDU) {
+			print("SMS as PDU Format\n");
 			int Retorno = 0;
 			Response Respuesta =  new Response();
 			StringBuilder ComandoAT = new StringBuilder();
@@ -1623,7 +1641,7 @@ ipdu++;
 			}
 			return Retorno[0];
 		}
-		// Usmos modo texto solo y unicamente si em modem no acepta modo PDU
+		// Usamos modo texto solo y unicamente si em modem no acepta modo PDU
 		private void SetearDefaultToPDUMode() {
 			if(this.Features.CMGF != Mode.TXT) {
 				this.CMGF_Set(Mode.PDU);
@@ -2496,12 +2514,16 @@ Set command disables or enables the use of result code +CME ERROR: as an indicat
 			return CMG_WS_TXT(Phone, Message);
 		}
 		internal int CMG_WS_TXT(string Phone, string Message, bool W = false) {
+		
+			print("SMS as TEXT Format\n");
 			// El tamaño maximo de un sms es de 160 caracteres
-			string message = Message;
+			string message = text_as_unicode(Message);
+			
+			//GLib.print("Send SMS Phone: %s - Text: %s\n", phone, Message);;
 			int Retorno = 0;
 			if(Phone.length>1) {
-				if(Message.length>160) {
-					message = Message.substring(0, 160);
+				if(message.length>160) {
+					message = text_as_unicode(Message).substring(0, 160);
 				}
 				int intentos = 0;
 				while(this.Features.CSCS.size>0 && intentos < 2) {
